@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>HighNoon</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: auto;
+            width: 800px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script type="text/javascript">
+
+        var config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        var game = new Phaser.Game(config);
+        let shootingTime = 0;
+        let yourShot = null;
+        let murderMessage = "Murderer!";
+        let heroMessage = "Hero of the Day!";
+        let deadMeatMessage = "You're dead meat!";
+        let tooSlowMessage = "Way too Slow";
+        let startMessage = "Press to Start"
+        let alive = true
+        var messageText;
+        var cursors;
+        var leftFlash;
+        var rightFlash;
+        let gameOver = true;
+        var peow;
+        let muzak;
+        var camera;
+        var blood;
+        let gun;
+
+        var particles;
+
+
+
+        let tensePause = Math.random() * 600
+        function preload() {
+            this.load.image('scene', 'assets/images/sky.png');
+            this.load.image('fire', 'assets/particles/smoke.png');
+            this.load.image('noose', 'assets/images/noose.png');
+            this.load.image('blood', 'assets/images/blood.png');
+            this.load.image('blocker', 'assets/images/blocker.png');
+            this.load.spritesheet('shooter', 'assets/images/shooter.png', { frameWidth: 400, frameHeight: 675 });
+            this.load.spritesheet('dying', 'assets/images/dying.png', { frameWidth: 400, frameHeight: 675 });
+            this.load.spritesheet('gun', 'assets/images/gun.png', { frameWidth: 200, frameHeight: 200});
+            this.load.audio('peow', 'assets/audio/peow.mp3');
+            this.load.audio('muzak', 'assets/audio/duel_at_high_noon.mp3');
+
+}
+
+        
+
+        function create() {
+
+
+            
+            camera =this.cameras.add(0, 0, 800, 500);
+            peow = this.sound.add('peow');
+            muzak=this.sound.add('muzak');
+
+            this.input.keyboard.on('keydown_SPACE', function (event) {
+                if (!yourShot) {
+                    peow.play(); yourShot = shootingTime;
+                }
+            });
+            this.input.keyboard.on('keydown_S', function (event) {
+                messageText.setText("")
+
+                shooter.x = 400
+
+                dying.x = -200;
+                gameOver = !gameOver
+            });
+            this.add.image(400, 300, 'scene').setScale(1, 1.1);
+
+            blockers = this.physics.add.staticGroup();
+            blockers.create(300, 700, 'blocker')
+            blockers.create(300, -800, 'blocker')
+            dying = this.physics.add.sprite(-200, 300, 'dying').setScale(0.5, 0.5);
+
+            shooter = this.physics.add.sprite(400, 300, 'shooter').setScale(0.5, 0.5);
+
+            bigShooter = this.physics.add.sprite(50, 450, 'shooter')
+
+            medShooter = this.physics.add.sprite(750, 375, 'shooter').setScale(0.75, 0.75)
+            medShooter.flipX = true;
+            gun=this.physics.add.sprite(400, 550, 'gun')
+            noose = this.physics.add.sprite(300, -400, 'noose');
+            
+            blood= this.physics.add.sprite(300, -1000, 'blood');
+            this.physics.add.collider(noose, blockers);
+            
+            gun.setInteractive();
+
+           gun.on('pointerdown', function (event) {
+                if (!yourShot && !gameOver) {
+                    peow.play();
+                    gun.anims.play('fire', true);
+                    gunFlash.start();
+                     yourShot = shootingTime;
+                }
+            });
+            particles = this.add.particles('fire');
+            messageText = this.add.text(100, 200, startMessage, { fontSize: '70px', fill: '#0f0' });
+            messageText.setInteractive();
+            messageText.on('pointerdown', function (event) {
+                messageText.setText("")
+                muzak.play();
+                shooter.x = 400
+               if (noose.y>0) noose.setGravityY(-600)
+                dying.x = -200;
+               blood.setVelocityY(0);
+                blood.y=-1000;
+                gameOver = !gameOver
+            });
+            this.anims.create({
+                key: 'shoots',
+                frames: this.anims.generateFrameNumbers('shooter', { start: 0, end: 11 }),
+                frameRate: 10,
+                repeat: 0
+            });
+
+            this.anims.create({
+                key: 'dies',
+                frames: this.anims.generateFrameNumbers('dying', { start: 0, end: 7 }),
+                frameRate: 10,
+                repeat: 0
+            });
+            this.anims.create({
+                key: 'fire',
+                frames: this.anims.generateFrameNumbers('gun', { start: 0, end:8 }),
+                frameRate: 30,
+                repeat: 0
+            });
+            leftFlash = particles.createEmitter({
+                alpha: { start: 1, end: 0 },
+                scale: { start: 0.5, end: 2.5 },
+                //tint: { start: 0xff945e, end: 0xff945e },
+                speed: 5,
+                accelerationY: -30,
+                angle: { min: -85, max: -95 },
+                rotate: { min: -180, max: 180 },
+                lifespan: { min: 2000, max: 5000 },
+
+                frequency: 110,
+                maxParticles: 10,
+                x: 340,
+                y: 300
+            });
+            rightFlash = particles.createEmitter({
+                alpha: { start: 1, end: 0 },
+                scale: { start: 0.5, end: 2.5 },
+                //tint: { start: 0xff945e, end: 0xff945e },
+                speed: 5,
+                accelerationY: -30,
+                angle: { min: -85, max: -95 },
+                rotate: { min: -180, max: 180 },
+                lifespan: { min: 2000, max: 5000 },
+
+                frequency: 110,
+                maxParticles: 10,
+                x: 440,
+                y: 300
+            });
+            gunFlash = particles.createEmitter({
+                alpha: { start: 1, end: 0 },
+                scale: { start: 0.5, end: 2.5 },
+                //tint: { start: 0xff945e, end: 0xff945e },
+                speed: 5,
+                accelerationY: -30,
+                angle: { min: -85, max: -95 },
+                rotate: { min: -180, max: 180 },
+                lifespan: { min: 2000, max: 5000 },
+
+                frequency: 110,
+                maxParticles: 10,
+                x: 460,
+                y: 505
+            });
+
+            rightFlash.stop();
+            leftFlash.stop();
+            gunFlash.stop();
+            
+        }
+
+        function update() {
+            
+            if (gameOver) {
+                muzak.stop();
+                if (bigShooter.x < 50) { (camera.zoom > 1) ? (camera.setZoom(camera.zoom - 0.01)) : null; 
+                bigShooter.setVelocityX(100); 
+                medShooter.setVelocityX(-200);
+              }
+                else {
+                    restart();
+                }
+
+
+
+
+
+            }
+            else {
+                checkDuelProgress();
+            }
+            
+            
+            
+            
+            
+            
+            
+            function checkDuelProgress() {
+                if (bigShooter.x > -200) { bigShooter.setVelocityX(-200); medShooter.setVelocityX(400) } else { bigShooter.setVelocityX(0); medShooter.setVelocityX(0); }
+
+                if (shootingTime > tensePause) { shooter.anims.play('shoots', true); }
+
+                if (yourShot) {
+                    if (yourShot < tensePause && alive) { 
+                        messageText.setText(murderMessage); 
+                        shooter.x = -200; 
+                        dying.x = 400; 
+                        dying.anims.play('dies', true); 
+                        noose.body.setGravityY(200);
+                        alive = false; 
+                        gameOver = true }
+                    else if (yourShot < tensePause + 30 && alive) { 
+                        messageText.setText(heroMessage); 
+                        shooter.x = -200; dying.x = 400; 
+                        dying.anims.play('dies', true); 
+                        live = false; gameOver = true }
+                    else if (yourShot > tensePause + 30) 
+                    { messageText.setText(tooSlowMessage); 
+                        rightFlash.start();
+                    leftFlash.start(); 
+                    blood.setVelocityY(400);
+                    gameOver = true } 
+                    }
+               
+                if (!yourShot && shootingTime > tensePause + 30) {
+
+                    messageText.setText(deadMeatMessage); 
+                    peow.play(); 
+                    rightFlash.start();
+                    leftFlash.start(); 
+                    blood.setVelocityY(400);
+                    gameOver = true;
+
+                }
+
+                shootingTime++; camera.setZoom(1 + (shootingTime / 600));
+
+
+
+            }
+
+            function restart() {
+                bigShooter.setVelocityX(0);
+                medShooter.setVelocityX(0);
+
+                
+                shootingTime = 0;
+                rightFlash.stop();
+                leftFlash.stop();
+                gunFlash.stop();
+                camera.setZoom(1);
+                yourShot = null;
+                
+                if (blood.body.velocity.y>0)blood.setVelocityY(10);
+              
+                alive = true
+                messageText.setText(startMessage)
+                tensePause = Math.random() * 600;
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>
