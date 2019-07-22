@@ -4,6 +4,12 @@
 <head>
     <meta charset="UTF-8" />
     <title>HighNoon</title>
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width, user-scalable=no, minimal-ui">
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="full-screen" content="yes" />
+        <meta name="screen-orientation" content="portrait" />
+        <script src="https://connect.facebook.net/en_US/fbinstant.6.2.js"></script>
+        <script src="lib/phaser-facebook-instant-games.js"></script>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
     <style type="text/css">
         body {
@@ -16,6 +22,7 @@
 <body>
 
     <script type="text/javascript">
+    
 
         var config = {
             type: Phaser.AUTO,
@@ -61,6 +68,8 @@
 
         let tensePause = Math.random() * 600
         function preload() {
+            this.facebook.showLoadProgress(this);
+            this.facebook.once('startgame', this.startGame, this)
             this.load.image('scene', 'assets/images/sky.png');
             this.load.image('fire', 'assets/particles/smoke.png');
             this.load.image('noose', 'assets/images/noose.png');
@@ -209,6 +218,14 @@
             gunFlash.stop();
             
         }
+        startGame ()
+    {
+        // this.scene.start('MainMenu');
+        // this.scene.start('PlayerDetails');
+        // this.scene.start('GameStats');
+        // this.scene.start('GameData');
+        this.scene.start('create');
+    }
 
         function update() {
             
